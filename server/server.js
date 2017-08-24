@@ -88,6 +88,21 @@ app.patch('/todos/:id', (req, res) => {
     });
 });
 
+app.post('/users', (req, res) => {
+  const body = _.pick(req.body, ['email', 'password']);
+  const user = new User(body);
+
+  user
+    .save()
+    .then(() => user.generateAuthToken())
+    .then((token) => {
+      res.header('x-auth', token).send(user);
+    })
+    .catch((e) => {
+      res.status(400).send(e.message);
+    });
+});
+
 app.listen(port, () => {
   console.log(`Started at port ${port}`);
 });
