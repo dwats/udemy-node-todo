@@ -161,15 +161,18 @@ describe('PATCH /todos/:id', () => {
   });
   it('should clear todo.completed and todo.completedAt', (done) => {
     const id = testTodos[1]._id.toHexString();
+    const text = 'new text';
     request(app)
       .patch(`/todos/${id}`)
       .send({
+        text,
         completed: false
       })
       .expect(200)
       .expect((res) => {
+        expect(res.body.todo.text).toBe(text);
         expect(res.body.todo.completed).toBe(false);
-        expect(res.body.todo.completedAt).toBe(null);
+        expect(res.body.todo.completedAt).toNotExist();
       })
       .end(done);
   });
