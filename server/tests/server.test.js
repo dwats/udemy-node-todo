@@ -176,4 +176,16 @@ describe('PATCH /todos/:id', () => {
       })
       .end(done);
   });
+  it('should 404 (invalid id)', (done) => {
+    request(app)
+      .patch('/todos/123')
+      .expect(404)
+      .end(done);
+  });
+  it('should 404 (not found)', (done) => {
+    request(app)
+      .patch(`/todos/${(new ObjectId()).toHexString()}`)
+      .expect(404)
+      .end(done);
+  });
 });
