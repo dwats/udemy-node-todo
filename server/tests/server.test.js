@@ -35,7 +35,6 @@ describe('POST /todos', () => {
       });
   });
 
-
   it('should not create todo with invalid body data', (done) => {
     request(app)
       .post('/todos')
@@ -79,12 +78,14 @@ describe('GET /todos/:id', () => {
       })
       .end(done);
   });
+
   it('should 404 (invalid id)', (done) => {
     request(app)
       .get('/todos/123')
       .expect(404)
       .end(done);
   });
+
   it('should 404 (not found)', (done) => {
     request(app)
       .get(`/todos/${(new ObjectId()).toHexString()}`)
@@ -114,12 +115,14 @@ describe('DELETE /todos/:id', () => {
           .end(done);
       });
   });
+
   it('should 404 (invalid id)', (done) => {
     request(app)
       .delete('/todos/123')
       .expect(404)
       .end(done);
   });
+
   it('should 404 (not found)', (done) => {
     request(app)
       .delete(`/todos/${(new ObjectId()).toHexString()}`)
@@ -146,6 +149,7 @@ describe('PATCH /todos/:id', () => {
       })
       .end(done);
   });
+
   it('should clear todo.completed and todo.completedAt', (done) => {
     const id = testTodos[1]._id.toHexString();
     const text = 'new text';
@@ -163,12 +167,14 @@ describe('PATCH /todos/:id', () => {
       })
       .end(done);
   });
+
   it('should 404 (invalid id)', (done) => {
     request(app)
       .patch('/todos/123')
       .expect(404)
       .end(done);
   });
+
   it('should 404 (not found)', (done) => {
     request(app)
       .patch(`/todos/${(new ObjectId()).toHexString()}`)
@@ -189,6 +195,7 @@ describe('GET /users/me', () => {
       })
       .end(done);
   });
+
   it('should return a 401 if not authenticated', (done) => {
     request(app)
       .get('/users/me')
@@ -224,9 +231,11 @@ describe('POST /users', () => {
             expect(user).toExist();
             expect(user.password).toNotBe(password);
             done();
-          });
+          })
+          .catch(e => done(e));
       });
   });
+
   it('should return 400 if request is invalid', (done) => {
     request(app)
       .post('/users')
@@ -237,6 +246,7 @@ describe('POST /users', () => {
       .expect(400)
       .end(done);
   });
+
   it('should not create user if email in use', (done) => {
     request(app)
       .post('/users')
@@ -246,5 +256,54 @@ describe('POST /users', () => {
       })
       .expect(400)
       .end(done);
+  });
+});
+
+describe('POST /users/login', () => {
+  it('should login users and return auth token', (done) => {
+    request(app)
+      .post('/users/login')
+      .send({
+        email: testUsers[1].email,
+        password: testUsers[1].password
+      })
+      .expect(200)
+      .expect((res) => {
+        expect(res.headers['x-auth']).toExist();
+      })
+      .end((err, res) => {
+        if (err) return done(err);
+        User.findById(testUsers[1]._id)
+          .then((user) => {
+            expect(user.tokens[0]).toInclude({
+              access: 'auth',
+              token: res.headers['x-auth']
+            });
+            done();
+          })
+          .catch(e => done(e));
+      });
+  });
+
+  it('should reject invalid login', (done) => {
+    request(app)
+      .post('/users/login')
+      .send({
+        email: testUsers[0].email,
+        password: 'ThisIsNotThePassword'
+      })
+      .expect(400)
+      .expect((res) => {
+        expect(res.headers['x-auth']).toNotExist();
+      })
+      .end((err, res) => {
+        if (err) return done(err);
+        User.findById(testUsers[1]._id)
+          .then((user) => {
+            expect(user.tokens.length).toBe(0);
+            done();
+          })
+          .catch(e => done(e));
+      });
   });
 });
