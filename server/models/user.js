@@ -57,8 +57,18 @@ UserSchema.methods.generateAuthToken = function generateAuthToken() {
     .catch(e => e);
 };
 
+UserSchema.methods.removeToken = function removeToken(token) {
+  const user = this;
+
+  return user.update({
+    $pull: {
+      tokens: { token }
+    }
+  });
+};
+
 UserSchema.statics.findByToken = function findByToken(token) {
-  const User = this;
+  const user = this;
   let decoded;
 
   try {
@@ -68,7 +78,7 @@ UserSchema.statics.findByToken = function findByToken(token) {
     return Promise.reject();
   }
 
-  return User
+  return user
     .findOne({
       _id: decoded._id,
       'tokens.token': token,
