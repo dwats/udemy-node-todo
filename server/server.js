@@ -112,15 +112,15 @@ app.get('/users/me', authenticate, (req, res) => {
 app.post('/users/login', (req, res) => {
   const body = _.pick(req.body, ['email', 'password']);
 
-  User.findOne({ email: body.email })
-    .then((user) => {
-      if (!user) return res.status(404).send();
-      return bcrypt.compare(body.password, user.password, (err, isValid) => {
-        if (!isValid) return res.status(401).send();
-        return res.send(user);
-      });
-    })
-    .catch(() => res.status(400).send());
+  User.findByCredentials(body.email, body.password)
+    .then(user => user.generateAuthToken()
+      .then((token) => {
+        res.header('x-auth', token).send(user);
+      })
+    )
+    .catch(() => {
+      res.status(400).send();
+    });
 });
 
 app.listen(port, () => {
